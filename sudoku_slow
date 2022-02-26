@@ -1,0 +1,143 @@
+import heapq,copy
+grid,val={'1': [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]],
+ '2': [[0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5]],
+ '3': [[0, 6], [0, 7], [0, 8], [1, 6], [1, 7], [1, 8], [2, 6], [2, 7], [2, 8]],
+ '4': [[3, 0], [3, 1], [3, 2], [4, 0], [4, 1], [4, 2], [5, 0], [5, 1], [5, 2]],
+ '5': [[3, 3], [3, 4], [3, 5], [4, 3], [4, 4], [4, 5], [5, 3], [5, 4], [5, 5]],
+ '6': [[3, 6], [3, 7], [3, 8], [4, 6], [4, 7], [4, 8], [5, 6], [5, 7], [5, 8]],
+ '7': [[6, 0], [6, 1], [6, 2], [7, 0], [7, 1], [7, 2], [8, 0], [8, 1], [8, 2]],
+ '8': [[6, 3], [6, 4], [6, 5], [7, 3], [7, 4], [7, 5], [8, 3], [8, 4], [8, 5]],
+ '9': [[6, 6], [6, 7], [6, 8], [7, 6], [7, 7], [7, 8], [8, 6], [8, 7], [8, 8]]},[1,2,3,4,5,6,7,8,9]
+sanity=[0,1,2,3,4,5,6,7,8,9]
+class node():
+    def __init__(self,v,h):
+        self.v=v
+        self.h=h
+        if 0<=v<3 and 0<=h<3:
+            self.g='1'
+        elif 0<=v<3 and 3<=h<6:
+            self.g='2'
+        elif 0<=v<3 and 6<=h<9:
+            self.g='3'
+        elif 3<=v<6 and 0<=h<3:
+            self.g='4'
+        elif 3<=v<6 and 3<=h<6:
+            self.g='5'
+        elif 3<=v<6 and 6<=h<9:
+            self.g='6'
+        elif 6<=v<9 and 0<=h<3:
+            self.g='7'
+        elif 6<=v<9 and 3<=h<6:
+            self.g='8'
+        else:
+            self.g='9'
+        self.choice=[]
+        self.free=len(self.choice)
+        self.value=0
+    def __lt__(self,other):
+        return self.free<other.free
+    def __eq__(self,other):
+        return self.free==other.free
+    def __gt__(self,other):
+        return self.free>other.free
+    def get_avail(self,sud):
+        i,j,k=self.v,self.h,self.g
+        av=[]
+        for x in range(9):
+            if sud[x][j].value!=0:
+                av.append(sud[x][j].value)
+        for y in range(9):
+            if sud[i][y].value!=0:
+                av.append(sud[i][y].value)
+        for x in range(len(grid[k])):
+            v=sud[grid[k][x][0]][grid[k][x][1]]
+            if v.g==k and v.value!=0:
+                av.append(v.value)
+        avail=list(set(val)-set(av))
+        if len(avail)==1:
+            self.value=avail[0]
+        self.choice=avail
+        self.free=len(avail)
+        return avail
+
+def board(sud):
+    aa=[]
+    for i in range(9):
+        aaa=[]
+        for j in range(9):
+            aaa.append(sud[i][j].value)
+        aa.append(aaa)
+    return aa
+def get_empty(sud):
+    aa=[]
+    for i in range(9):
+        for j in range(9):
+            if sud[i][j].value==0:
+                aa.append(sud[i][j])
+    return aa
+   
+
+def sudoku_solver(puzzle):
+    if len(puzzle)!=9:
+        raise ValueError
+    a,new=[],[]
+    for i in range(9):
+        if len(puzzle[i])!=9:
+            raise ValueError
+        c=[]
+        
+        for j in range(9):
+
+            
+            b=node(i,j)
+            if puzzle[i][j]!=0:
+                b.value=puzzle[i][j]
+            c.append(b)
+        a.append(c)
+    l=0
+    while get_empty(a)!=l:
+        l=get_empty(a)
+        for i in range(len(l)):
+            a[l[i].v][l[i].h].get_avail(a)
+
+    if l==0:
+        return board(a) 
+    else:
+        new.append(a)
+    answer=[]            
+    while len(new)!=0:
+        sud=new.pop(-1)
+        em=get_empty(sud)
+        em=heapq.nlargest(len(em),em)
+        s=em.pop(-1)
+        cand=s.get_avail(sud)
+        cand=heapq.nlargest(len(cand),cand)
+        for k in range(len(cand)):
+            b=copy.deepcopy(sud)
+
+            b[s.v][s.h].value=cand[k]
+            l,aaa=0,0
+            while len(get_empty(b))!=l and aaa==0:
+                ll=get_empty(b)
+                l=len(ll)
+                for i in range(len(ll)):
+                    b[ll[i].v][ll[i].h].get_avail(b)
+                    if len(b[ll[i].v][ll[i].h].choice)==0:
+                        aaa+=1
+                        
+                        break
+            if aaa==0:
+                if l==0:
+                    for i in range(9):
+                        q=[]
+                        for j in range(9):
+                            q.append(b[i][j].value)
+                        answer.append(q)
+                    return answer
+            
+                new.append(b)      
+
+
+
+
+
